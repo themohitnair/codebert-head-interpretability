@@ -1,5 +1,4 @@
 def walk_tree(node, code, tokens):
-
     if len(node.children) == 0:
         token = code[node.start_byte : node.end_byte]
         tokens.append((token, node.type))
@@ -9,14 +8,12 @@ def walk_tree(node, code, tokens):
 
 
 def extract_tokens(code, root_node):
-
     tokens = []
     walk_tree(root_node, code, tokens)
     return tokens
 
 
 def classify_token(token, node_type, spec):
-
     if token in spec.KEYWORDS:
         return "keyword"
 
@@ -39,7 +36,6 @@ def classify_token(token, node_type, spec):
 
 
 def classify_tokens(tokens, spec):
-
     results = []
 
     for token, node_type in tokens:

@@ -15,5 +15,5 @@ class BaseDataset(ABC):
         return ds[split]
 
     @abstractmethod
-    def to_examples(self, dataset: Dataset) -> Iterator[CodeQueryModel]:
+    def to_examples(self, dataset: Dataset, max_examples: int|None=None) -> Iterator[CodeQueryModel]:
         pass

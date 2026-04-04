@@ -3,7 +3,6 @@ from .codesearchnet import CodeSearchNetDataset
 
 
 def get_dataset(name: str, **kwargs) -> BaseDataset:
-
     if name == "codesearchnet":
         return CodeSearchNetDataset(**kwargs)
 
