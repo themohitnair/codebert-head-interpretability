@@ -1,19 +1,8 @@
-def walk_tree(node, code, tokens):
-    if len(node.children) == 0:
-        token = code[node.start_byte : node.end_byte]
-        tokens.append((token, node.type))
-
-    for child in node.children:
-        walk_tree(child, code, tokens)
+from codebert_head_interpretability.languages.base_spec import LanguageSpec
+from codebert_head_interpretability.models.tokens import ASTToken, ClassifiedToken
 
 
-def extract_tokens(code, root_node):
-    tokens = []
-    walk_tree(root_node, code, tokens)
-    return tokens
-
-
-def classify_token(token, node_type, spec):
+def _classify_single_token(token: str, node_type: str, spec: LanguageSpec) -> str:
     if token in spec.KEYWORDS:
         return "keyword"
 
@@ -35,11 +24,18 @@ def classify_token(token, node_type, spec):
     return "other"
 
 
-def classify_tokens(tokens, spec):
-    results = []
+def classify_tokens(
+    ast_tokens: list[ASTToken], spec: LanguageSpec
+) -> list[ClassifiedToken]:
+    results: list[ClassifiedToken] = []
 
-    for token, node_type in tokens:
-        category = classify_token(token, node_type, spec)
-        results.append((token, category))
+    for ast_token in ast_tokens:
+        category = _classify_single_token(ast_token.token, ast_token.node_type, spec)
+        results.append(
+            ClassifiedToken(
+                **ast_token.model_dump(),
+                category=category,
+            )
+        )
 
     return results
