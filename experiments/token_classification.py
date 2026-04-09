@@ -1,4 +1,4 @@
-from codebert_head_interpretability.dataset import get_dataset
+from codebert_head_interpretability.datasets import get_dataset
 from codebert_head_interpretability.parsers.token_classifier import classify_tokens
 from codebert_head_interpretability.parsers.tree_sitter_parser import CodeParser
 from codebert_head_interpretability.languages.python_spec import PythonSpec

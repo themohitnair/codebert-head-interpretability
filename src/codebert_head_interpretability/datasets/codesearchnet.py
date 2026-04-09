@@ -1,7 +1,7 @@
 from typing import Iterator
 from datasets import Dataset
 from .base import BaseDataset
-from codebert_head_interpretability.models.code_query import CodeQueryModel
+from codebert_head_interpretability.schemas.code_query import CodeQueryModel
 
 
 class CodeSearchNetDataset(BaseDataset):

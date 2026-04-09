@@ -1,5 +1,5 @@
 from codebert_head_interpretability.languages.base_spec import LanguageSpec
-from codebert_head_interpretability.models.tokens import ASTToken, ClassifiedToken
+from codebert_head_interpretability.schemas.tokens import ASTToken, ClassifiedToken
 
 
 def _classify_single_token(token: str, node_type: str, spec: LanguageSpec) -> str:

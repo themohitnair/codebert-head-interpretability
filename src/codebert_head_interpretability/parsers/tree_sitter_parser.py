@@ -1,7 +1,7 @@
 import tree_sitter_languages
 from tree_sitter import Parser
 
-from codebert_head_interpretability.models.tokens import ASTToken
+from codebert_head_interpretability.schemas.tokens import ASTToken
 
 
 class CodeParser:

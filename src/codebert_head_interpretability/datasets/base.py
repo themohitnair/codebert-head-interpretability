@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Iterator
 from datasets import Dataset, load_dataset
 
-from codebert_head_interpretability.models.code_query import CodeQueryModel
+from codebert_head_interpretability.schemas.code_query import CodeQueryModel
 
 
 class BaseDataset(ABC):

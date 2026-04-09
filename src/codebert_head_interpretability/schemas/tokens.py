@@ -12,11 +12,11 @@ class ClassifiedToken(ASTToken):
     category: str
 
 
-class BPEToken(BaseModel):
+class ModelToken(BaseModel):
     text: str
     start: int
     end: int
-    token_id: int
+    index: int
 
 
 class AlignedToken(BaseModel):
