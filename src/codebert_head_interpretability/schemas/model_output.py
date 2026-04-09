@@ -1,8 +1,12 @@
+from typing import Any
 from pydantic import BaseModel
-from typing import Any, List
 from .tokens import ModelToken
 
 
-class ModelOutput(BaseModel):
-    tokens: List[ModelToken]
+class WindowOutput(BaseModel):
+    tokens: list[ModelToken]
     attentions: Any
+
+
+class ModelOutput(BaseModel):
+    windows: list[WindowOutput]
