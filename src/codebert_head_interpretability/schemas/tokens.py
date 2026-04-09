@@ -23,5 +23,5 @@ class AlignedToken(BaseModel):
     text: str
     start: int
     end: int
-    token_id: int
+    index: int
     category: str
