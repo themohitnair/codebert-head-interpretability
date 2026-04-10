@@ -4,6 +4,7 @@ from codebert_head_interpretability.schemas.tokens import (
 )
 from codebert_head_interpretability.schemas.model_output import (
     ModelOutput,
+    ModelOutputWithQuery,
     ModelToken,
 )
 
@@ -20,7 +21,7 @@ def align_window_tokens(
     aligned_tokens: list[AlignedToken] = []
 
     for mt in model_tokens:
-        # skip special tokens (offsets 0, 0)
+        # skip special and query tokens (offsets 0, 0)
         if mt.start == mt.end:
             continue
 
@@ -52,7 +53,7 @@ def align_window_tokens(
 
 def align_model_output(
     ast_tokens: list[ClassifiedToken],
-    model_output: ModelOutput,
+    model_output: ModelOutput | ModelOutputWithQuery,
 ) -> list[list[AlignedToken]]:
 
     all_aligned: list[list[AlignedToken]] = []

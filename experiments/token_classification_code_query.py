@@ -42,16 +42,11 @@ def main():
 
             aligned_windows = align_model_output(classified_tokens, output)
 
-            # query length
-            query_len = len(
-                model.tokenizer(query, add_special_tokens=False)["input_ids"]
-            )
-
             for window, aligned_tokens in zip(output.windows, aligned_windows):
                 stats = analyzer.analyze_query_to_code(
                     aligned_tokens,
                     window.attentions,
-                    query_len,
+                    window.query_len,
                 )
 
                 for entry in stats:

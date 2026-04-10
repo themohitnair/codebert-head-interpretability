@@ -8,5 +8,13 @@ class WindowOutput(BaseModel):
     attentions: Any
 
 
+class WindowOutputWithQuery(WindowOutput):
+    query_len: int
+
+
 class ModelOutput(BaseModel):
     windows: list[WindowOutput]
+
+
+class ModelOutputWithQuery(BaseModel):
+    windows: list[WindowOutputWithQuery]

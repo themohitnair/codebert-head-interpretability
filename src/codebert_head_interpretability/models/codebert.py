@@ -4,8 +4,10 @@ from transformers import RobertaTokenizer, RobertaModel
 from codebert_head_interpretability.models.base import BaseModel
 from codebert_head_interpretability.schemas.model_output import (
     ModelOutput,
+    ModelOutputWithQuery,
     WindowOutput,
     ModelToken,
+    WindowOutputWithQuery,
 )
 from codebert_head_interpretability.utils.sliding_window import (
     create_sliding_windows,
@@ -99,7 +101,7 @@ class CodeBertModel(BaseModel):
 
         return ModelOutput(windows=all_windows)
 
-    def run_query_code(self, query: str, code: str) -> ModelOutput:
+    def run_query_code(self, query: str, code: str) -> ModelOutputWithQuery:
 
         query_enc = self.tokenizer(
             query,
@@ -125,7 +127,7 @@ class CodeBertModel(BaseModel):
             stride=self.stride,
         )
 
-        all_windows: list[WindowOutput] = []
+        all_windows: list[WindowOutputWithQuery] = []
 
         for input_ids_full, attention_mask, code_window_offsets, query_len in windows:
             tokens = self.tokenizer.convert_ids_to_tokens(input_ids_full)
@@ -165,10 +167,11 @@ class CodeBertModel(BaseModel):
             )
 
             all_windows.append(
-                WindowOutput(
+                WindowOutputWithQuery(
                     tokens=model_tokens,
                     attentions=outputs.attentions,
+                    query_len=query_len,
                 )
             )
 
-        return ModelOutput(windows=all_windows)
+        return ModelOutputWithQuery(windows=all_windows)

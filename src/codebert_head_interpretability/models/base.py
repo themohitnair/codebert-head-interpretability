@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
-from codebert_head_interpretability.schemas.model_output import ModelOutput
+from codebert_head_interpretability.schemas.model_output import (
+    ModelOutput,
+    ModelOutputWithQuery,
+)
 
 
 class BaseModel(ABC):
@@ -8,5 +11,5 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def run_query_code(self, query: str, code: str) -> ModelOutput:
+    def run_query_code(self, query: str, code: str) -> ModelOutputWithQuery:
         pass
