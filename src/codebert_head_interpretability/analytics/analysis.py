@@ -93,7 +93,7 @@ class AttentionAnalyzer:
 
                     val = 0.0
                     for q_idx in query_indices:
-                        val += head_attn[q_idx, c_idx]
+                        val += head_attn[q_idx, c_idx].item()
 
                     return val
 
