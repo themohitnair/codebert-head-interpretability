@@ -6,8 +6,8 @@ from codebert_head_interpretability.parsers.token_classifier import classify_tok
 from codebert_head_interpretability.languages.python_spec import PythonSpec
 from codebert_head_interpretability.models.codebert import CodeBertModel
 from codebert_head_interpretability.alignment.token_alignment import align_model_output
-from codebert_head_interpretability.analysis.code_analysis import AttentionAnalyzer
-from codebert_head_interpretability.analysis.code_visualization import (
+from codebert_head_interpretability.analytics.analysis import AttentionAnalyzer
+from codebert_head_interpretability.analytics.visualization import (
     AttentionVisualizer,
 )
 
@@ -42,7 +42,7 @@ def main():
             aligned_windows = align_model_output(classified_tokens, output)
 
             for window, aligned_tokens in zip(output.windows, aligned_windows):
-                stats = analyzer.analyze(aligned_tokens, window.attentions)
+                stats = analyzer.analyze_code_only(aligned_tokens, window.attentions)
 
                 for entry in stats:
                     key = (entry["layer"], entry["head"])

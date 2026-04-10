@@ -127,21 +127,32 @@ class CodeBertModel(BaseModel):
 
         all_windows: list[WindowOutput] = []
 
-        for input_ids_full, attention_mask, code_window_offsets in windows:
+        for input_ids_full, attention_mask, code_window_offsets, query_len in windows:
             tokens = self.tokenizer.convert_ids_to_tokens(input_ids_full)
 
             offsets_full: list[tuple[int, int]] = []
 
-            code_offset_idx = 0
+            for i in range(len(tokens)):
+                if i == 0:
+                    offsets_full.append((0, 0))  # <s>
 
-            for tok in tokens:
-                if tok in ["<s>", "</s>"]:
-                    offsets_full.append((0, 0))
-                elif code_offset_idx < len(code_window_offsets):
-                    offsets_full.append(code_window_offsets[code_offset_idx])
-                    code_offset_idx += 1
+                elif 1 <= i <= query_len:
+                    offsets_full.append((0, 0))  # query tokens
+
+                elif i == query_len + 1:
+                    offsets_full.append((0, 0))  # first </s>
+
+                elif i < len(tokens) - 1:
+                    # code tokens
+                    code_idx = i - (query_len + 2)
+
+                    if code_idx < len(code_window_offsets):
+                        offsets_full.append(code_window_offsets[code_idx])
+                    else:
+                        offsets_full.append((0, 0))
+
                 else:
-                    offsets_full.append((0, 0))
+                    offsets_full.append((0, 0))  # last </s>
 
             model_tokens = self._build_model_tokens(tokens, offsets_full)
 

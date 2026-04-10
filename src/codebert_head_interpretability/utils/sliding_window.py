@@ -33,11 +33,23 @@ def build_query_code_window(
     max_length,
     stride,
 ):
+    # TODO: check how the query to code ratio affects the results
+
     # reserve space for special tokens (3 special tokens: <s>, </s>, </s> for query and code separation)
-    reserved = len(query_ids) + 3
+    if len(query_ids) + 3 >= max_length:
+        query_ids = query_ids[: max_length - 3]
+
+    query_len = len(query_ids)
+
+    reserved = query_len + 3
     code_max_len = max_length - reserved
 
-    windows = create_sliding_windows(code_ids, code_offsets, code_max_len, stride)
+    windows = create_sliding_windows(
+        code_ids,
+        code_offsets,
+        code_max_len,
+        stride,
+    )
 
     combined_windows = []
 
@@ -52,6 +64,13 @@ def build_query_code_window(
 
         attention_mask = [1] * len(input_ids)
 
-        combined_windows.append((input_ids, attention_mask, code_chunk_offsets))
+        combined_windows.append(
+            (
+                input_ids,
+                attention_mask,
+                code_chunk_offsets,
+                query_len,
+            )
+        )
 
     return combined_windows
