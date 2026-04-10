@@ -1,52 +1,63 @@
 from collections import defaultdict
 
-
 from codebert_head_interpretability.datasets import get_dataset
 from codebert_head_interpretability.parsers.tree_sitter_parser import CodeParser
 from codebert_head_interpretability.parsers.token_classifier import classify_tokens
 from codebert_head_interpretability.languages.python_spec import PythonSpec
 from codebert_head_interpretability.models.codebert import CodeBertModel
 from codebert_head_interpretability.alignment.token_alignment import align_model_output
-from codebert_head_interpretability.analysis.code_analysis import analyze_attention
-from codebert_head_interpretability.analysis.visualization import (
-    plot_category_heatmap,
-    plot_top_category,
-    plot_entropy,
+from codebert_head_interpretability.analysis.code_analysis import AttentionAnalyzer
+from codebert_head_interpretability.analysis.code_visualization import (
+    AttentionVisualizer,
 )
+
+NUM_EXAMPLES = 100
+OUTPUT_DIR = "outputs"
 
 
 def main():
-
     dataset = get_dataset("codesearchnet", language="python")
     ds = dataset.load(split="train")
 
     parser = CodeParser(language="python")
     model = CodeBertModel()
+    analyzer = AttentionAnalyzer()
+    visualizer = AttentionVisualizer()
 
     global_stats = defaultdict(lambda: defaultdict(float))
     count_per_head = defaultdict(int)
 
-    for example in dataset.to_examples(ds, max_examples=100):
+    print("\nProcessing dataset...\n")
+
+    for i, example in enumerate(dataset.to_examples(ds, max_examples=NUM_EXAMPLES)):
         code = example.code
 
-        root = parser.parse(code)
-        ast_tokens = parser.get_ast_tokens(root, code)
-        classified_tokens = classify_tokens(ast_tokens, PythonSpec())
+        try:
+            root = parser.parse(code)
+            ast_tokens = parser.get_ast_tokens(root, code)
+            classified_tokens = classify_tokens(ast_tokens, PythonSpec())
 
-        output = model.run_code(code)
+            output = model.run_code(code)
 
-        aligned_windows = align_model_output(classified_tokens, output)
+            aligned_windows = align_model_output(classified_tokens, output)
 
-        for window, aligned_tokens in zip(output.windows, aligned_windows):
-            stats = analyze_attention(aligned_tokens, window.attentions)
+            for window, aligned_tokens in zip(output.windows, aligned_windows):
+                stats = analyzer.analyze(aligned_tokens, window.attentions)
 
-            for entry in stats:
-                key = (entry["layer"], entry["head"])
+                for entry in stats:
+                    key = (entry["layer"], entry["head"])
 
-                for cat, val in entry["distribution"].items():
-                    global_stats[key][cat] += val
+                    for cat, val in entry["distribution"].items():
+                        global_stats[key][cat] += val
 
-                count_per_head[key] += 1
+                    count_per_head[key] += 1
+
+        except Exception as e:
+            print(f"Skipping example {i} due to error: {e}")
+            continue
+
+        if i % 10 == 0:
+            print(f"Processed {i} examples...")
 
     # ===================== PRINT =====================
 
@@ -65,28 +76,41 @@ def main():
 
         print()
 
-    # ===================== PLOTS =====================
+    # ===================== VISUALIZATIONS =====================
 
-    plot_category_heatmap(
+    print("\nGenerating visualizations...\n")
+
+    categories = set()
+    for cat_dict in global_stats.values():
+        categories.update(cat_dict.keys())
+
+    for category in categories:
+        visualizer.plot_category_heatmap(
+            global_stats,
+            count_per_head,
+            category=category,
+            save_path=f"{OUTPUT_DIR}/{category}_heatmap.png",
+        )
+
+    visualizer.plot_top_category_map(
         global_stats,
         count_per_head,
-        "identifier",
-        save_path="outputs/identifier_heatmap.png",
-    )
-    plot_category_heatmap(
-        global_stats, count_per_head, "keyword", save_path="outputs/keyword_heatmap.png"
-    )
-    plot_category_heatmap(
-        global_stats,
-        count_per_head,
-        "delimiter",
-        save_path="outputs/delimiter_heatmap.png",
+        save_path=f"{OUTPUT_DIR}/top_category_map.png",
     )
 
-    plot_top_category(
-        global_stats, count_per_head, save_path="outputs/top_category.png"
+    visualizer.plot_head_distribution(
+        global_stats,
+        count_per_head,
+        save_path=f"{OUTPUT_DIR}/head_distribution.png",
     )
-    plot_entropy(global_stats, count_per_head, save_path="outputs/entropy.png")
+
+    visualizer.plot_entropy(
+        global_stats,
+        count_per_head,
+        save_path=f"{OUTPUT_DIR}/entropy.png",
+    )
+
+    print(f"\nAll outputs saved to '{OUTPUT_DIR}/'\n")
 
 
 if __name__ == "__main__":
