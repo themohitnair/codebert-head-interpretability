@@ -1,9 +1,10 @@
 from collections import defaultdict
 
 from codebert_head_interpretability.datasets import get_dataset
-from codebert_head_interpretability.parsers.tree_sitter_parser import CodeParser
-from codebert_head_interpretability.parsers.token_classifier import classify_tokens
-from codebert_head_interpretability.languages.python_spec import PythonSpec
+from codebert_head_interpretability.parsers import (
+    CodeParser,
+    ClassifyTokens,
+)
 from codebert_head_interpretability.models.codebert import CodeBertModel
 from codebert_head_interpretability.alignment.token_alignment import align_model_output
 from codebert_head_interpretability.analytics.analysis import AttentionAnalyzer
@@ -23,6 +24,7 @@ def main():
     model = CodeBertModel()
     analyzer = AttentionAnalyzer()
     visualizer = AttentionVisualizer()
+    classifier = ClassifyTokens(parser=parser)
 
     global_stats = defaultdict(lambda: defaultdict(float))
     count_per_head = defaultdict(int)
@@ -33,9 +35,7 @@ def main():
         code = example.code
 
         try:
-            root = parser.parse(code)
-            ast_tokens = parser.get_ast_tokens(root, code)
-            classified_tokens = classify_tokens(ast_tokens, PythonSpec())
+            classified_tokens = classifier.classify_tokens(code)
 
             output = model.run_code(code)
 

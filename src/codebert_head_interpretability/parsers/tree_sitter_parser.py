@@ -1,6 +1,8 @@
 import tree_sitter_languages
 from tree_sitter import Parser
 
+from codebert_head_interpretability.languages import get_language_spec
+from codebert_head_interpretability.languages.base_spec import LanguageSpec
 from codebert_head_interpretability.schemas.tokens import ASTToken
 
 
@@ -9,6 +11,10 @@ class CodeParser:
         lang = tree_sitter_languages.get_language(language)
         self.parser = Parser()
         self.parser.set_language(lang)
+        self.language_spec = get_language_spec(language)
+
+    def get_language_spec(self) -> LanguageSpec:
+        return self.language_spec
 
     def parse(self, code):
         tree = self.parser.parse(bytes(code, "utf8"))
