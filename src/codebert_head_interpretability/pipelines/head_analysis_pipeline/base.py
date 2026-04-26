@@ -40,7 +40,7 @@ class BasePipeline:
                 print(f"Skipping example {i}: {e}")
                 continue
 
-            if i % 10 == 0:
+            if i % 10 == 0 and i > 0:
                 print(f"Processed {i} examples...")
 
         print("\nGenerating visualizations...\n")
