@@ -11,7 +11,7 @@ from codebert_head_interpretability.pipelines.head_analysis_pipeline import (
 load_dotenv()
 
 
-LANGUAGE = os.getenv("LANGUAGE", "python")
+LANGUAGE = os.getenv("PROGRAMMING_LANGUAGE", "python")
 NUM_EXAMPLES = int(os.getenv("NUM_EXAMPLES", "100"))
 DATASET_NAME = os.getenv("DATASET_NAME", "codesearchnet")
 
