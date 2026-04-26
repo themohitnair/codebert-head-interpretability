@@ -2,10 +2,11 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+from codebert_head_interpretability.schemas.analysis import HeadAnalysisResult
 from codebert_head_interpretability.utils.maths import compute_entropy
 
 
-class AttentionVisualizer:
+class HeadAnalysisVisualizer:
     def __init__(self, layers=12, heads=12):
         self.layers = layers
         self.heads = heads
@@ -18,12 +19,31 @@ class AttentionVisualizer:
         else:
             plt.show()
 
-    def _compute_avg_stats(self, global_stats, count_per_head):
+    def _group_by_head(self, results: list[HeadAnalysisResult]):
+        grouped = {}
+
+        for r in results:
+            key = (r.layer, r.head)
+
+            if key not in grouped:
+                grouped[key] = []
+
+            grouped[key].append(r.distribution.scores)
+
+        return grouped
+
+    def _average_distributions(self, grouped):
         avg_stats = {}
 
-        for (layer, head), cat_dict in global_stats.items():
-            total = count_per_head[(layer, head)]
-            avg_stats[(layer, head)] = {k: v / total for k, v in cat_dict.items()}
+        for key, dist_list in grouped.items():
+            agg = {}
+
+            for dist in dist_list:
+                for cat, val in dist.items():
+                    agg[cat] = agg.get(cat, 0) + val
+
+            total = len(dist_list)
+            avg_stats[key] = {k: v / total for k, v in agg.items()}
 
         return avg_stats
 
@@ -41,14 +61,11 @@ class AttentionVisualizer:
 
         return grid
 
-    def plot_category_heatmap(
-        self,
-        global_stats,
-        count_per_head,
-        category="identifier",
-        save_path=None,
-    ):
-        avg_stats = self._compute_avg_stats(global_stats, count_per_head)
+    # ===================== HEATMAP =====================
+
+    def plot_category_heatmap(self, results, category="identifier", save_path=None):
+        grouped = self._group_by_head(results)
+        avg_stats = self._average_distributions(grouped)
 
         def value_fn(cat_dict):
             return cat_dict.get(category, 0)
@@ -68,13 +85,12 @@ class AttentionVisualizer:
 
         self._show_or_save_plot(save_path)
 
-    def plot_top_category_map(
-        self,
-        global_stats,
-        count_per_head,
-        save_path=None,
-    ):
-        avg_stats = self._compute_avg_stats(global_stats, count_per_head)
+    # ===================== TOP CATEGORY =====================
+
+    def plot_top_category_map(self, results, save_path=None):
+        grouped = self._group_by_head(results)
+        avg_stats = self._average_distributions(grouped)
+
         categories = self._get_categories(avg_stats)
         cat_to_idx = {cat: i for i, cat in enumerate(categories)}
 
@@ -100,13 +116,12 @@ class AttentionVisualizer:
 
         self._show_or_save_plot(save_path)
 
-    def plot_head_distribution(
-        self,
-        global_stats,
-        count_per_head,
-        save_path=None,
-    ):
-        avg_stats = self._compute_avg_stats(global_stats, count_per_head)
+    # ===================== DISTRIBUTION =====================
+
+    def plot_head_distribution(self, results, save_path=None):
+        grouped = self._group_by_head(results)
+        avg_stats = self._average_distributions(grouped)
+
         categories = self._get_categories(avg_stats)
 
         labels = []
@@ -135,20 +150,28 @@ class AttentionVisualizer:
 
         self._show_or_save_plot(save_path)
 
-    def plot_entropy(
-        self,
-        global_stats,
-        count_per_head,
-        save_path=None,
-    ):
-        avg_stats = self._compute_avg_stats(global_stats, count_per_head)
+    # ===================== ENTROPY =====================
+
+    def plot_entropy(self, results: list[HeadAnalysisResult], save_path=None):
+        grouped = self._group_by_head(results)
 
         labels = []
         entropies = []
 
-        for (layer, head), cat_dict in sorted(avg_stats.items()):
+        for (layer, head), dist_list in sorted(grouped.items()):
+            avg_dist = {}
+
+            for dist in dist_list:
+                for cat, val in dist.items():
+                    avg_dist[cat] = avg_dist.get(cat, 0) + val
+
+            total = len(dist_list)
+            avg_dist = {k: v / total for k, v in avg_dist.items()}
+
+            entropy = compute_entropy(avg_dist)
+
             labels.append(f"L{layer}H{head}")
-            entropies.append(compute_entropy(cat_dict))
+            entropies.append(entropy)
 
         plt.figure(figsize=(14, 5))
         plt.bar(range(len(entropies)), entropies)

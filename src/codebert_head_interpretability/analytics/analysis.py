@@ -1,10 +1,17 @@
 from collections import defaultdict
 
+from codebert_head_interpretability.schemas.analysis import (
+    CategoryDistribution,
+    HeadAnalysisResult,
+)
+from codebert_head_interpretability.schemas.tokens import AlignedToken
 from codebert_head_interpretability.utils.maths import compute_entropy
 
 
-class AttentionAnalyzer:
-    def _aggregate_and_normalize(self, category_scores, category_counts):
+class HeadAnalysisAnalyzer:
+    def _aggregate_and_normalize(
+        self, category_scores, category_counts
+    ) -> CategoryDistribution:
         for cat in category_scores:
             if category_counts[cat] > 0:
                 category_scores[cat] /= category_counts[cat]
@@ -14,9 +21,11 @@ class AttentionAnalyzer:
             for cat in category_scores:
                 category_scores[cat] /= total
 
-        return dict(category_scores)
+        return CategoryDistribution(scores=dict(category_scores))
 
-    def _analyze_head(self, tokens, score_fn):
+    def _analyze_head(
+        self, tokens: list[AlignedToken], score_fn
+    ) -> tuple[CategoryDistribution, float]:
         category_scores = defaultdict(float)
         category_counts = defaultdict(int)
 
@@ -36,12 +45,14 @@ class AttentionAnalyzer:
 
         distribution = self._aggregate_and_normalize(category_scores, category_counts)
 
-        entropy = compute_entropy(distribution)
+        entropy = compute_entropy(distribution.scores)
 
         return distribution, entropy
 
-    def analyze_code_only(self, aligned_tokens, attentions):
-        results = []
+    def analyze_code_only(
+        self, aligned_tokens: list[AlignedToken], attentions
+    ) -> list[HeadAnalysisResult]:
+        results: list[HeadAnalysisResult] = []
 
         for layer_idx, layer_attn in enumerate(attentions):
             layer_attn = layer_attn.squeeze(0)
@@ -61,18 +72,20 @@ class AttentionAnalyzer:
                 distribution, entropy = self._analyze_head(aligned_tokens, score_fn)
 
                 results.append(
-                    {
-                        "layer": layer_idx,
-                        "head": head_idx,
-                        "distribution": distribution,
-                        "entropy": entropy,
-                    }
+                    HeadAnalysisResult(
+                        layer=layer_idx,
+                        head=head_idx,
+                        distribution=distribution,
+                        entropy=entropy,
+                    )
                 )
 
         return results
 
-    def analyze_query_to_code(self, aligned_tokens, attentions, query_len):
-        results = []
+    def analyze_query_to_code(
+        self, aligned_tokens: list[AlignedToken], attentions, query_len: int
+    ) -> list[HeadAnalysisResult]:
+        results: list[HeadAnalysisResult] = []
 
         for layer_idx, layer_attn in enumerate(attentions):
             layer_attn = layer_attn.squeeze(0)
@@ -100,12 +113,12 @@ class AttentionAnalyzer:
                 distribution, entropy = self._analyze_head(code_tokens, score_fn)
 
                 results.append(
-                    {
-                        "layer": layer_idx,
-                        "head": head_idx,
-                        "distribution": distribution,
-                        "entropy": entropy,
-                    }
+                    HeadAnalysisResult(
+                        layer=layer_idx,
+                        head=head_idx,
+                        distribution=distribution,
+                        entropy=entropy,
+                    )
                 )
 
         return results

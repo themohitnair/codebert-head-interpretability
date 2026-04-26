@@ -3,7 +3,7 @@ from codebert_head_interpretability.parsers.tree_sitter_parser import CodeParser
 from codebert_head_interpretability.schemas.tokens import ClassifiedToken
 
 
-class ClassifyTokens:
+class TokenClassifier:
     def __init__(self, parser: CodeParser):
         self.parser = parser
 

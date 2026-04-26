@@ -19,3 +19,8 @@ class BaseDataset(ABC):
         self, dataset: Dataset, max_examples: int | None = None
     ) -> Iterator[CodeQueryModel]:
         pass
+
+    @property
+    @abstractmethod
+    def language(self) -> str:
+        pass

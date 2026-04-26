@@ -9,7 +9,11 @@ class CodeSearchNetDataset(BaseDataset):
         super().__init__(
             dataset_name="code-search-net/code_search_net", cache_dir=cache_dir
         )
-        self.language = language
+        self._language = language
+
+    @property
+    def language(self) -> str:
+        return self._language
 
     def to_examples(
         self, dataset: Dataset, max_examples: int | None = None
