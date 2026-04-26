@@ -25,6 +25,10 @@ class CodeBertModel(BaseModel):
             output_attentions=True,
         )
 
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
+        self.model.eval()
+
         self.max_length = 512
         self.stride = 256
 
