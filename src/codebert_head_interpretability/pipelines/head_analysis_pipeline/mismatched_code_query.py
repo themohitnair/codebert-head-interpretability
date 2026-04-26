@@ -47,7 +47,10 @@ class MismatchPipeline(CodeQueryPipeline):
         while True:
             random.shuffle(shuffled_queries)
 
-            if all(q1 != q2 for q1, q2 in zip(queries, shuffled_queries)):
+            if (
+                all(q1 != q2 for q1, q2 in zip(queries, shuffled_queries))
+                or len(queries) <= 1
+            ):
                 break
 
         return [

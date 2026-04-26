@@ -1,4 +1,5 @@
-from codebert_head_interpretability.datasets.codesearchnet import CodeSearchNetDataset
+import os
+from codebert_head_interpretability.datasets import get_dataset
 from codebert_head_interpretability.models.codebert import CodeBertModel
 from codebert_head_interpretability.pipelines.head_analysis_pipeline import (
     CodeOnlyPipeline,
@@ -6,35 +7,45 @@ from codebert_head_interpretability.pipelines.head_analysis_pipeline import (
     MismatchPipeline,
 )
 
-LANGUAGE = "python"
-NUM_EXAMPLES = 100
+
+LANGUAGE = os.getenv("LANGUAGE", "python")
+NUM_EXAMPLES = int(os.getenv("NUM_EXAMPLES", "100"))
+DATASET_NAME = os.getenv("DATASET_NAME", "codesearchnet")
+
+HEAD_ANALYSIS_OUTPUT_DIR = "head_analysis_" + LANGUAGE + "_outputs"
 
 
 def main():
 
-    codesearchnet_dataset = CodeSearchNetDataset(language=LANGUAGE)
+    dataset = get_dataset(DATASET_NAME, language=LANGUAGE)
     codebert_model = CodeBertModel()
 
     print("Head Analysis Pipeline - Code Only")
     pipeline = CodeOnlyPipeline(
-        codesearchnet_dataset,
+        dataset,
         codebert_model,
     )
-    pipeline.run(max_examples=NUM_EXAMPLES, output_dir="outputs_code")
+    pipeline.run(
+        max_examples=NUM_EXAMPLES, output_dir=HEAD_ANALYSIS_OUTPUT_DIR + "/code_only"
+    )
 
     print("Head Analysis Pipeline - Code Query")
     pipeline = CodeQueryPipeline(
-        codesearchnet_dataset,
+        dataset,
         codebert_model,
     )
-    pipeline.run(max_examples=NUM_EXAMPLES, output_dir="outputs_query")
+    pipeline.run(
+        max_examples=NUM_EXAMPLES, output_dir=HEAD_ANALYSIS_OUTPUT_DIR + "/code_query"
+    )
 
     print("Head Analysis Pipeline - Mismatched Code Query")
     pipeline = MismatchPipeline(
-        codesearchnet_dataset,
+        dataset,
         codebert_model,
     )
-    pipeline.run(max_examples=NUM_EXAMPLES, output_dir="outputs_mismatch")
+    pipeline.run(
+        max_examples=NUM_EXAMPLES, output_dir=HEAD_ANALYSIS_OUTPUT_DIR + "/mismatch"
+    )
 
 
 if __name__ == "__main__":
