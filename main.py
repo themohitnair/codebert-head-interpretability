@@ -20,6 +20,10 @@ def main():
     dataset = get_dataset(DATASET_NAME, language=LANGUAGE)
     codebert_model = CodeBertModel()
 
+    print(
+        f"Running head analysis pipelines for {LANGUAGE} with dataset '{DATASET_NAME}' and {NUM_EXAMPLES} examples...\n"
+    )
+
     print("Head Analysis Pipeline - Code Only")
     pipeline = CodeOnlyPipeline(
         dataset,
