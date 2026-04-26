@@ -1,4 +1,4 @@
-from codebert_head_interpretability.languages.base_spec import LanguageSpec
+from codebert_head_interpretability.languages.base import LanguageSpec
 from codebert_head_interpretability.parsers.tree_sitter_parser import CodeParser
 from codebert_head_interpretability.schemas.tokens import ClassifiedToken
 

@@ -2,7 +2,7 @@ import tree_sitter_languages
 from tree_sitter import Parser
 
 from codebert_head_interpretability.languages import get_language_spec
-from codebert_head_interpretability.languages.base_spec import LanguageSpec
+from codebert_head_interpretability.languages.base import LanguageSpec
 from codebert_head_interpretability.schemas.tokens import ASTToken
 
 

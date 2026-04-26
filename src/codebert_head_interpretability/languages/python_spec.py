@@ -1,5 +1,5 @@
 import keyword
-from .base_spec import LanguageSpec
+from .base import LanguageSpec
 
 
 class PythonSpec(LanguageSpec):

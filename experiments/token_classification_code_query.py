@@ -7,7 +7,7 @@ from codebert_head_interpretability.parsers import (
     ClassifyTokens,
 )
 from codebert_head_interpretability.models.codebert import CodeBertModel
-from codebert_head_interpretability.alignment.token_alignment import align_model_output
+from codebert_head_interpretability.utils.token_alignment import align_model_output
 from codebert_head_interpretability.analytics.visualization import (
     AttentionVisualizer,
 )
