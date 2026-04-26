@@ -88,13 +88,14 @@ class CodeBertModel(BaseModel):
 
             model_tokens = self._build_model_tokens(tokens, offsets_full)
 
-            input_tensor = torch.tensor([input_ids_full])
-            mask_tensor = torch.tensor([attention_mask])
+            with torch.no_grad():
+                input_tensor = torch.tensor([input_ids_full], device=self.device)
+                mask_tensor = torch.tensor([attention_mask], device=self.device)
 
-            outputs = self.model(
-                input_ids=input_tensor,
-                attention_mask=mask_tensor,
-            )
+                outputs = self.model(
+                    input_ids=input_tensor,
+                    attention_mask=mask_tensor,
+                )
 
             all_windows.append(
                 WindowOutput(
@@ -162,13 +163,14 @@ class CodeBertModel(BaseModel):
 
             model_tokens = self._build_model_tokens(tokens, offsets_full)
 
-            input_tensor = torch.tensor([input_ids_full])
-            mask_tensor = torch.tensor([attention_mask])
+            with torch.no_grad():
+                input_tensor = torch.tensor([input_ids_full], device=self.device)
+                mask_tensor = torch.tensor([attention_mask], device=self.device)
 
-            outputs = self.model(
-                input_ids=input_tensor,
-                attention_mask=mask_tensor,
-            )
+                outputs = self.model(
+                    input_ids=input_tensor,
+                    attention_mask=mask_tensor,
+                )
 
             all_windows.append(
                 WindowOutputWithQuery(
