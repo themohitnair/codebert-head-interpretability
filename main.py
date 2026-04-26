@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from codebert_head_interpretability.datasets import get_dataset
 from codebert_head_interpretability.models.codebert import CodeBertModel
 from codebert_head_interpretability.pipelines.head_analysis_pipeline import (
@@ -6,6 +7,8 @@ from codebert_head_interpretability.pipelines.head_analysis_pipeline import (
     CodeQueryPipeline,
     MismatchPipeline,
 )
+
+load_dotenv()
 
 
 LANGUAGE = os.getenv("LANGUAGE", "python")
