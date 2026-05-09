@@ -1,5 +1,4 @@
-import os
-from dotenv import load_dotenv
+import argparse
 from codebert_head_interpretability.datasets import get_dataset
 from codebert_head_interpretability.models.codebert import CodeBertModel
 from codebert_head_interpretability.pipelines.head_analysis_pipeline import (
@@ -8,51 +7,70 @@ from codebert_head_interpretability.pipelines.head_analysis_pipeline import (
     MismatchPipeline,
 )
 
-load_dotenv()
-
-
-LANGUAGE = os.getenv("PROGRAMMING_LANGUAGE", "python")
-NUM_EXAMPLES = int(os.getenv("NUM_EXAMPLES", "100"))
-DATASET_NAME = os.getenv("DATASET_NAME", "codesearchnet")
-
-HEAD_ANALYSIS_OUTPUT_DIR = "head_analysis_" + LANGUAGE + "_outputs"
+PIPELINES = {
+    "code_only": CodeOnlyPipeline,
+    "code_query": CodeQueryPipeline,
+    "mismatch": MismatchPipeline,
+}
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="Run head analysis pipelines for CodeBERT interpretability."
+    )
+    parser.add_argument(
+        "--language",
+        type=str,
+        default="python",
+        help="Programming language to analyze (default: python)",
+    )
+    parser.add_argument(
+        "--num-examples",
+        type=int,
+        default=100,
+        help="Number of examples to process (default: 100)",
+    )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="codesearchnet",
+        help="Dataset name to use (default: codesearchnet)",
+    )
+    parser.add_argument(
+        "--pipelines",
+        type=str,
+        nargs="+",
+        choices=["code_only", "code_query", "mismatch"],
+        default=["code_only", "code_query", "mismatch"],
+        help="Pipelines to run. Options: code_only, code_query, mismatch. Can specify multiple. (default: all)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Output directory base (default: head_analysis_<language>_outputs)",
+    )
 
-    dataset = get_dataset(DATASET_NAME, language=LANGUAGE)
+    args = parser.parse_args()
+
+    output_dir = args.output_dir or f"head_analysis_{args.language}_outputs"
+
+    dataset = get_dataset(args.dataset, language=args.language)
     codebert_model = CodeBertModel()
 
     print(
-        f"Running head analysis pipelines for {LANGUAGE} with dataset '{DATASET_NAME}' and {NUM_EXAMPLES} examples...\n"
+        f"Running head analysis pipelines for {args.language} with dataset '{args.dataset}' and {args.num_examples} examples...\n"
     )
 
-    print("Head Analysis Pipeline - Code Only")
-    pipeline = CodeOnlyPipeline(
-        dataset,
-        codebert_model,
-    )
-    pipeline.run(
-        max_examples=NUM_EXAMPLES, output_dir=HEAD_ANALYSIS_OUTPUT_DIR + "/code_only"
-    )
-
-    print("Head Analysis Pipeline - Code Query")
-    pipeline = CodeQueryPipeline(
-        dataset,
-        codebert_model,
-    )
-    pipeline.run(
-        max_examples=NUM_EXAMPLES, output_dir=HEAD_ANALYSIS_OUTPUT_DIR + "/code_query"
-    )
-
-    print("Head Analysis Pipeline - Mismatched Code Query")
-    pipeline = MismatchPipeline(
-        dataset,
-        codebert_model,
-    )
-    pipeline.run(
-        max_examples=NUM_EXAMPLES, output_dir=HEAD_ANALYSIS_OUTPUT_DIR + "/mismatch"
-    )
+    for pipeline_name in args.pipelines:
+        print(f"Head Analysis Pipeline - {pipeline_name.replace('_', ' ').title()}")
+        pipeline_class = PIPELINES[pipeline_name]
+        pipeline = pipeline_class(dataset, codebert_model)
+        pipeline.run(
+            max_examples=args.num_examples,
+            output_dir=f"{output_dir}/{pipeline_name}",
+        )
+        print()
 
 
 if __name__ == "__main__":
