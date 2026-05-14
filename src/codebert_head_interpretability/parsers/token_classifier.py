@@ -43,7 +43,16 @@ class TokenClassifier:
         if token in spec.DELIMITERS:
             return "delimiter"
 
-        if node_type in ["string", "integer", "float"]:
-            return "literal"
+        if "string" in node_type:
+            return "string"
 
-        return "other"
+        if node_type in [
+            "integer",
+            "float",
+        ]:
+            return "numeric_literal"
+
+        if node_type == "comment":
+            return "comment"
+
+        return "escape_sequence"

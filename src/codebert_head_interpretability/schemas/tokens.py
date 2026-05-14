@@ -25,3 +25,4 @@ class AlignedToken(BaseModel):
     end: int
     index: int
     category: str
+    confidence: float

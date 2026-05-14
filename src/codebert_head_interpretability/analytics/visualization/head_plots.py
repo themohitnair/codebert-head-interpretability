@@ -114,3 +114,74 @@ class HeadPlots:
         plt.tight_layout()
 
         self._show_or_save_plot(save_path)
+
+    def plot_dominant_category_heatmap(
+        self,
+        metrics: list[HeadMetrics],
+        save_path=None,
+    ):
+        categories = sorted(
+            {
+                max(
+                    m.scores,
+                    key=m.scores.get,
+                )
+                for m in metrics
+            }
+        )
+
+        cat_to_idx = {cat: i for i, cat in enumerate(categories)}
+
+        grid = np.zeros((self.layers, self.heads))
+
+        for m in metrics:
+            dominant = max(
+                m.scores,
+                key=m.scores.get,
+            )
+
+            grid[m.layer, m.head] = cat_to_idx[dominant]
+
+        plt.figure(figsize=(12, 6))
+
+        im = plt.imshow(
+            grid,
+            aspect="auto",
+        )
+
+        cbar = plt.colorbar(im)
+
+        cbar.set_ticks(range(len(categories)))
+
+        cbar.set_ticklabels(categories)
+
+        plt.xlabel("Head")
+
+        plt.ylabel("Layer")
+
+        plt.title("Dominant Category per Attention Head")
+
+        plt.xticks(range(self.heads))
+
+        plt.yticks(range(self.layers))
+
+        for layer in range(self.layers):
+            for head in range(self.heads):
+                cat_idx = int(grid[layer, head])
+
+                cat = categories[cat_idx]
+
+                short = cat[:3]
+
+                plt.text(
+                    head,
+                    layer,
+                    short,
+                    ha="center",
+                    va="center",
+                    fontsize=6,
+                )
+
+        plt.tight_layout()
+
+        self._show_or_save_plot(save_path)

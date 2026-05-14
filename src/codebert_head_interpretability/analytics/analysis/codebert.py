@@ -30,7 +30,7 @@ class HeadAnalysisAnalyzer:
         category_counts = defaultdict(int)
 
         for token in tokens:
-            if token is None:
+            if token is None or token.category == "unknown":
                 continue
 
             score = score_fn(token)

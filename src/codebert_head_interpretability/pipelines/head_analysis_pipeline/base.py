@@ -1,9 +1,6 @@
 from codebert_head_interpretability.analytics.analysis.codebert import (
     HeadAnalysisAnalyzer,
 )
-from codebert_head_interpretability.analytics.visualization.visualization import (
-    HeadAnalysisVisualizer,
-)
 from codebert_head_interpretability.datasets.base import BaseDataset
 from codebert_head_interpretability.models.base import BaseModel
 from codebert_head_interpretability.parsers.token_classifier import TokenClassifier
@@ -20,6 +17,17 @@ from codebert_head_interpretability.analytics.visualization.head_plots import He
 from codebert_head_interpretability.analytics.visualization.layer_plots import (
     LayerPlots,
 )
+from codebert_head_interpretability.analytics.clustering.features import (
+    HeadFeatureExtractor,
+)
+from codebert_head_interpretability.analytics.clustering.pca import PCAEmbedder
+from codebert_head_interpretability.analytics.clustering.kmeans import (
+    HeadClusterAnalyzerKMeans,
+)
+from codebert_head_interpretability.analytics.clustering.summary import ClusterSummary
+from codebert_head_interpretability.analytics.visualization.cluster_plots import (
+    ClusterPlots,
+)
 
 
 class BasePipeline:
@@ -28,12 +36,16 @@ class BasePipeline:
         self.model = model
         self.parser = CodeParser(language=dataset.language)
         self.analyzer = HeadAnalysisAnalyzer()
-        self.visualizer = HeadAnalysisVisualizer()
         self.classifier = TokenClassifier(parser=self.parser)
         self.head_aggregator = HeadMetricsAggregator()
         self.layer_aggregator = LayerMetricsAggregator()
         self.head_plots = HeadPlots()
         self.layer_plots = LayerPlots()
+        self.feature_extractor = HeadFeatureExtractor()
+        self.pca_embedder = PCAEmbedder()
+        self.cluster_analyzer = HeadClusterAnalyzerKMeans()
+        self.cluster_summary = ClusterSummary()
+        self.cluster_plots = ClusterPlots()
 
     def process_example(self, example: CodeQueryModel) -> list[HeadAnalysisResult]:
         raise NotImplementedError
@@ -87,20 +99,55 @@ class BasePipeline:
             self.head_plots.plot_category_heatmap(
                 head_metrics,
                 category=category,
-                save_path=(f"{output_dir}/figures/{category}_heatmap.png"),
+                save_path=(f"{output_dir}/{category}_heatmap.png"),
             )
 
         self.head_plots.plot_entropy(
             head_metrics,
-            save_path=(f"{output_dir}/figures/head_entropy.png"),
+            save_path=(f"{output_dir}/head_entropy.png"),
+        )
+
+        self.head_plots.plot_dominant_category_heatmap(
+            head_metrics,
+            save_path=(f"{output_dir}/dominant_category_heatmap.png"),
         )
 
         self.layer_plots.plot_semantic_vs_structural(
             layer_metrics,
-            save_path=(f"{output_dir}/figures/semantic_vs_structural.png"),
+            save_path=(f"{output_dir}/semantic_vs_structural.png"),
         )
 
         self.layer_plots.plot_layer_entropy(
             layer_metrics,
-            save_path=(f"{output_dir}/figures/layer_entropy.png"),
+            save_path=(f"{output_dir}/layer_entropy.png"),
+        )
+
+        vectors = self.feature_extractor.extract(head_metrics)
+
+        embeddings, _ = self.pca_embedder.fit_transform(vectors)
+
+        clustered = self.cluster_analyzer.cluster(
+            vectors=vectors,
+            metrics=head_metrics,
+            embeddings=embeddings,
+            n_clusters=4,
+        )
+
+        cluster_summary = self.cluster_summary.summarize(
+            clustered,
+            head_metrics,
+        )
+
+        print("\nCluster Summary:\n")
+
+        for cluster, summary in cluster_summary.items():
+            print(
+                f"Cluster {cluster}: "
+                f"{summary['dominant_category']} "
+                f"(size={summary['size']})"
+            )
+
+        self.cluster_plots.plot_pca_clusters(
+            clustered,
+            save_path=(f"{output_dir}/pca_clusters.png"),
         )
