@@ -1,5 +1,7 @@
-from codebert_head_interpretability.analytics.analysis import HeadAnalysisAnalyzer
-from codebert_head_interpretability.analytics.visualization import (
+from codebert_head_interpretability.analytics.analysis.codebert import (
+    HeadAnalysisAnalyzer,
+)
+from codebert_head_interpretability.analytics.visualization.visualization import (
     HeadAnalysisVisualizer,
 )
 from codebert_head_interpretability.datasets.base import BaseDataset
@@ -8,6 +10,16 @@ from codebert_head_interpretability.parsers.token_classifier import TokenClassif
 from codebert_head_interpretability.parsers.tree_sitter_parser import CodeParser
 from codebert_head_interpretability.schemas.analysis import HeadAnalysisResult
 from codebert_head_interpretability.schemas.code_query import CodeQueryModel
+from codebert_head_interpretability.analytics.aggregation.head import (
+    HeadMetricsAggregator,
+)
+from codebert_head_interpretability.analytics.aggregation.layer import (
+    LayerMetricsAggregator,
+)
+from codebert_head_interpretability.analytics.visualization.head_plots import HeadPlots
+from codebert_head_interpretability.analytics.visualization.layer_plots import (
+    LayerPlots,
+)
 
 
 class BasePipeline:
@@ -18,6 +30,10 @@ class BasePipeline:
         self.analyzer = HeadAnalysisAnalyzer()
         self.visualizer = HeadAnalysisVisualizer()
         self.classifier = TokenClassifier(parser=self.parser)
+        self.head_aggregator = HeadMetricsAggregator()
+        self.layer_aggregator = LayerMetricsAggregator()
+        self.head_plots = HeadPlots()
+        self.layer_plots = LayerPlots()
 
     def process_example(self, example: CodeQueryModel) -> list[HeadAnalysisResult]:
         raise NotImplementedError
@@ -49,33 +65,42 @@ class BasePipeline:
 
         print(f"\nAll outputs saved to '{output_dir}/'\n")
 
-    def _visualize(self, results: list[HeadAnalysisResult], output_dir: str):
+    def _visualize(
+        self,
+        results: list[HeadAnalysisResult],
+        output_dir: str,
+    ):
         if not results:
             print("No results to visualize.")
             return
 
+        head_metrics = self.head_aggregator.aggregate(results)
+
+        layer_metrics = self.layer_aggregator.aggregate(head_metrics)
+
         categories = set()
-        for r in results:
-            categories.update(r.distribution.scores.keys())
+
+        for h in head_metrics:
+            categories.update(h.scores.keys())
 
         for category in sorted(categories):
-            self.visualizer.plot_category_heatmap(
-                results,
+            self.head_plots.plot_category_heatmap(
+                head_metrics,
                 category=category,
-                save_path=f"{output_dir}/{category}_heatmap.png",
+                save_path=(f"{output_dir}/figures/{category}_heatmap.png"),
             )
 
-        self.visualizer.plot_top_category_map(
-            results,
-            save_path=f"{output_dir}/top_category_map.png",
+        self.head_plots.plot_entropy(
+            head_metrics,
+            save_path=(f"{output_dir}/figures/head_entropy.png"),
         )
 
-        self.visualizer.plot_head_distribution(
-            results,
-            save_path=f"{output_dir}/head_distribution.png",
+        self.layer_plots.plot_semantic_vs_structural(
+            layer_metrics,
+            save_path=(f"{output_dir}/figures/semantic_vs_structural.png"),
         )
 
-        self.visualizer.plot_entropy(
-            results,
-            save_path=f"{output_dir}/entropy.png",
+        self.layer_plots.plot_layer_entropy(
+            layer_metrics,
+            save_path=(f"{output_dir}/figures/layer_entropy.png"),
         )
