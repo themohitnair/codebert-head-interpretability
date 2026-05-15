@@ -1,3 +1,5 @@
+import os
+
 from codebert_head_interpretability.analytics.analysis.codebert import (
     HeadAnalysisAnalyzer,
 )
@@ -28,6 +30,18 @@ from codebert_head_interpretability.analytics.clustering.summary import ClusterS
 from codebert_head_interpretability.analytics.visualization.cluster_plots import (
     ClusterPlots,
 )
+from codebert_head_interpretability.analytics.clustering.validation import (
+    ClusterValidator,
+)
+from codebert_head_interpretability.analytics.clustering.divergence import (
+    ClusterDivergenceAnalyzer,
+)
+from codebert_head_interpretability.analytics.statistics.significance import (
+    StatisticalAnalyzer,
+)
+from codebert_head_interpretability.analytics.statistics.permutation import (
+    PermutationTester,
+)
 
 
 class BasePipeline:
@@ -46,6 +60,10 @@ class BasePipeline:
         self.cluster_analyzer = HeadClusterAnalyzerKMeans()
         self.cluster_summary = ClusterSummary()
         self.cluster_plots = ClusterPlots()
+        self.cluster_validator = ClusterValidator()
+        self.cluster_divergence = ClusterDivergenceAnalyzer()
+        self.stats_analyzer = StatisticalAnalyzer()
+        self.permutation_tester = PermutationTester()
 
     def process_example(self, example: CodeQueryModel) -> list[HeadAnalysisResult]:
         raise NotImplementedError
@@ -76,6 +94,13 @@ class BasePipeline:
         self._visualize(all_results, output_dir)
 
         print(f"\nAll outputs saved to '{output_dir}/'\n")
+
+    def _save_stats_to_file(self, output_dir: str, stats_content: str) -> None:
+        os.makedirs(output_dir, exist_ok=True)
+        stats_path = os.path.join(output_dir, "analysis_stats.txt")
+        with open(stats_path, "w") as f:
+            f.write(stats_content)
+        print(f"Stats saved to '{stats_path}'")
 
     def _visualize(
         self,
@@ -138,14 +163,16 @@ class BasePipeline:
             head_metrics,
         )
 
-        print("\nCluster Summary:\n")
-
+        cluster_summary_str = "\n" + "=" * 60 + "\n"
+        cluster_summary_str += "CLUSTER SUMMARY\n"
+        cluster_summary_str += "=" * 60 + "\n"
         for cluster, summary in cluster_summary.items():
-            print(
+            cluster_summary_str += (
                 f"Cluster {cluster}: "
                 f"{summary['dominant_category']} "
-                f"(size={summary['size']})"
+                f"(size={summary['size']})\n"
             )
+        print(cluster_summary_str)
 
         self.cluster_plots.plot_pca_clusters(
             clustered,
@@ -173,3 +200,69 @@ class BasePipeline:
             head_metrics,
             save_path=(f"{output_dir}/cluster_specialization.png"),
         )
+
+        silhouette = self.cluster_validator.silhouette(
+            vectors,
+            clustered,
+        )
+
+        silhouette_str = "\n" + "=" * 60 + "\n"
+        silhouette_str += "SILHOUETTE SCORE\n"
+        silhouette_str += "=" * 60 + "\n"
+        silhouette_str += f"{silhouette:.4f}\n"
+        print(silhouette_str)
+
+        divergences = self.cluster_divergence.pairwise_js_divergence(
+            head_metrics,
+            clustered,
+        )
+
+        divergence_str = "\n" + "=" * 60 + "\n"
+        divergence_str += "JS DIVERGENCES (Pairwise)\n"
+        divergence_str += "=" * 60 + "\n"
+        for pair, div in divergences.items():
+            divergence_str += f"{pair}: {div:.4f}\n"
+        print(divergence_str)
+
+        entropy_stats = self.stats_analyzer.entropy_anova(
+            head_metrics,
+            clustered,
+        )
+
+        entropy_anova_str = "\n" + "=" * 60 + "\n"
+        entropy_anova_str += "ENTROPY ANOVA\n"
+        entropy_anova_str += "=" * 60 + "\n"
+        entropy_anova_str += f"{entropy_stats}\n"
+        print(entropy_anova_str)
+
+        specialization_stats = self.stats_analyzer.specialization_anova(
+            head_metrics,
+            clustered,
+        )
+
+        specialization_anova_str = "\n" + "=" * 60 + "\n"
+        specialization_anova_str += "SPECIALIZATION ANOVA\n"
+        specialization_anova_str += "=" * 60 + "\n"
+        specialization_anova_str += f"{specialization_stats}\n"
+        print(specialization_anova_str)
+
+        perm = self.permutation_tester.entropy_trend_test(
+            layer_metrics,
+        )
+
+        perm_str = "\n" + "=" * 60 + "\n"
+        perm_str += "ENTROPY TREND PERMUTATION TEST\n"
+        perm_str += "=" * 60 + "\n"
+        perm_str += f"{perm}\n"
+        print(perm_str)
+
+        # Combine all stats and save to file
+        all_stats = (
+            cluster_summary_str
+            + silhouette_str
+            + divergence_str
+            + entropy_anova_str
+            + specialization_anova_str
+            + perm_str
+        )
+        self._save_stats_to_file(output_dir, all_stats)
