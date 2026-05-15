@@ -14,9 +14,7 @@ class MismatchPipeline(CodeQueryPipeline):
 
         print("\nProcessing dataset...\n")
 
-        for i, example in enumerate(
-            self.dataset.to_examples(ds, max_examples=max_examples)
-        ):
+        for i, example in enumerate(examples):
             try:
                 results = self.process_example(example)
                 all_results.extend(results)
