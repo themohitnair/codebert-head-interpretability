@@ -151,3 +151,25 @@ class BasePipeline:
             clustered,
             save_path=(f"{output_dir}/pca_clusters.png"),
         )
+
+        self.cluster_plots.plot_cluster_distribution_by_layer(
+            clustered,
+            save_path=(f"{output_dir}/cluster_distribution_by_layer.png"),
+        )
+
+        self.cluster_plots.plot_cluster_heatmap(
+            clustered,
+            save_path=(f"{output_dir}/cluster_heatmap.png"),
+        )
+
+        self.cluster_plots.plot_cluster_entropy(
+            clustered,
+            head_metrics,
+            save_path=(f"{output_dir}/cluster_entropy.png"),
+        )
+
+        self.cluster_plots.plot_cluster_specialization(
+            clustered,
+            head_metrics,
+            save_path=(f"{output_dir}/cluster_specialization.png"),
+        )
