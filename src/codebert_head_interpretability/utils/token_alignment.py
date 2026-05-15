@@ -176,6 +176,10 @@ def print_alignment_stats(
 
     total = stats["total_tokens"]
 
+    unknown_token_ratio = distribution.get("unknown", 0) / total
+
+    print(f"Unknown Token Ratio: {unknown_token_ratio:.2%}")
+
     for cat, count in sorted(
         distribution.items(),
         key=lambda x: x[1],
