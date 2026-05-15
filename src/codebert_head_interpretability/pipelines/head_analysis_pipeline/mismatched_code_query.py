@@ -6,7 +6,7 @@ from .code_query import CodeQueryPipeline
 
 class MismatchPipeline(CodeQueryPipeline):
     def run(self, split="train", max_examples=100, output_dir="outputs"):
-        ds = self.dataset.load(split)
+        ds = self.dataset.load(split, self.dataset.language)
 
         all_results: list[HeadAnalysisResult] = []
         examples = list(self.dataset.to_examples(ds, max_examples))

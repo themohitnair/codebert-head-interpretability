@@ -69,7 +69,7 @@ class BasePipeline:
         raise NotImplementedError
 
     def run(self, split="train", max_examples=100, output_dir="outputs"):
-        ds = self.dataset.load(split)
+        ds = self.dataset.load(split, self.dataset.language)
 
         all_results: list[HeadAnalysisResult] = []
 

@@ -10,8 +10,8 @@ class BaseDataset(ABC):
         self.dataset_name = dataset_name
         self.cache_dir = cache_dir
 
-    def load(self, split: str) -> Dataset:
-        ds = load_dataset(self.dataset_name, cache_dir=self.cache_dir)
+    def load(self, split: str, subset: str | None = None) -> Dataset:
+        ds = load_dataset(self.dataset_name, subset, cache_dir=self.cache_dir)
         return ds[split]
 
     @abstractmethod
