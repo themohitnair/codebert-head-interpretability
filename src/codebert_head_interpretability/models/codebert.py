@@ -1,5 +1,6 @@
 import torch
 from transformers import RobertaTokenizer, RobertaModel
+from typing import Any
 
 from codebert_head_interpretability.models.base import BaseModel
 from codebert_head_interpretability.schemas.model_output import (
@@ -52,7 +53,7 @@ class CodeBertModel(BaseModel):
 
         return model_tokens
 
-    def run_code(self, code: str) -> ModelOutput:
+    def run_code(self, code: str, intervention: Any = None) -> ModelOutput:
 
         encoding = self.tokenizer(
             code,
@@ -92,10 +93,16 @@ class CodeBertModel(BaseModel):
                 input_tensor = torch.tensor([input_ids_full], device=self.device)
                 mask_tensor = torch.tensor([attention_mask], device=self.device)
 
-                outputs = self.model(
-                    input_ids=input_tensor,
-                    attention_mask=mask_tensor,
-                )
+                if intervention is not None:
+                    intervention.register(self.model)
+                try:
+                    outputs = self.model(
+                        input_ids=input_tensor,
+                        attention_mask=mask_tensor,
+                    )
+                finally:
+                    if intervention is not None:
+                        intervention.remove()
 
             all_windows.append(
                 WindowOutput(
@@ -106,7 +113,12 @@ class CodeBertModel(BaseModel):
 
         return ModelOutput(windows=all_windows)
 
-    def run_query_code(self, query: str, code: str) -> ModelOutputWithQuery:
+    def run_query_code(
+        self,
+        query: str,
+        code: str,
+        intervention: Any = None,
+    ) -> ModelOutputWithQuery:
 
         query_enc = self.tokenizer(
             query,
@@ -167,10 +179,16 @@ class CodeBertModel(BaseModel):
                 input_tensor = torch.tensor([input_ids_full], device=self.device)
                 mask_tensor = torch.tensor([attention_mask], device=self.device)
 
-                outputs = self.model(
-                    input_ids=input_tensor,
-                    attention_mask=mask_tensor,
-                )
+                if intervention is not None:
+                    intervention.register(self.model)
+                try:
+                    outputs = self.model(
+                        input_ids=input_tensor,
+                        attention_mask=mask_tensor,
+                    )
+                finally:
+                    if intervention is not None:
+                        intervention.remove()
 
             all_windows.append(
                 WindowOutputWithQuery(
